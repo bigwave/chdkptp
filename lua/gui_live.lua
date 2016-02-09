@@ -635,7 +635,56 @@ function m.init()
 			},
 		},
 		margin="4x4",
-		ngap="4"
+		ngap="4",
+		iup.frame{
+			title="Remote Capture",
+			iup.vbox{
+				gap="10",
+				iup.button{
+					title="Destination",
+					size="75x15",
+					fgcolor="0 0 255",
+					--current path as tooltip
+					tip=m.imdl_dest,
+					action=function(self)
+						local dlg=iup.filedlg{
+							dialogtype = "DIR",
+							title = "Destination",
+							directory = m.rs_dest,
+						}
+						dlg:popup(iup_centerparent, iup_centerparent)
+						if dlg.status == "0" then
+							m.rs_dest = dlg.value
+							--update to new ini selection
+							ini_user.remote_capture.dest = m.rs_dest
+							ini.write(ini_user)
+							gui.infomsg("download destination %s\n", m.rs_dest)
+							--update path as tooltip
+							self.tip = m.rs_dest
+						end
+					end,
+				},
+				iup.button{
+					title="JPG Remote Shoot",
+					size="75x15",
+					fgcolor="255 0 0",
+					tip="Does not work for all cameras!",
+					action=function(self)
+						local cmd = string.format("rs '%s'", m.rs_dest)
+						add_status(cli:execute(cmd))
+					end,
+				},
+				iup.button{
+					title="DNG Remote Shoot",
+					size="75x15",
+					fgcolor="255 0 0",
+					action=function(self)
+						local cmd = string.format("rs '%s' -dng", m.rs_dest)
+						add_status(cli:execute(cmd))
+					end,
+				},
+			},
+		}
 	}
 
 	function icnv:map_cb()
