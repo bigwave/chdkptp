@@ -55,6 +55,7 @@ end
 
 local vp_toggle=iup.toggle{
 	title="Viewfinder",
+	value="1",
 	action=function(self,state)
 		m.vp_active = (state == 1)
 	end,
@@ -734,6 +735,8 @@ function m.on_connect_change(lcon)
 		reset_last_frame_vals()
 		if con:live_is_api_compatible() then
 			m.live_con_valid = true
+			m.vp_active = true
+			gui.switch_mode(1)
 		else
 			warnf('camera live view protocol not supported by this client, live view disabled')
 		end

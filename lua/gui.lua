@@ -252,6 +252,30 @@ function statusupdatepos()
 	end
 end
 
+function gui.switch_mode(m)
+switch_mode(m)
+end
+
+function half_shoot()
+	gui.execquick(string.format([[
+	local timeout=%d
+	local rec,vid = get_mode()
+	if rec and not vid then
+		press("shoot_half")
+		local n = 0
+		repeat
+			sleep(10)
+			n = n + 10
+		until get_shooting() == true or n > timeout
+		release("shoot_half")
+	else
+		press("shoot_half") 
+		sleep(1000)
+		release("shoot_half")
+	end
+	]],prefs.gui_shoot_half_timeout))
+end
+
 --[[
 switch play / rec mode, update capture mode dropdown
 TODO the cli command should integrate with this
@@ -390,23 +414,7 @@ cam_btn_frame = iup.vbox{
 			title='shoot half',
 			size='45x15',
 			action=function(self)
-				gui.execquick(string.format([[
-local timeout=%d
-local rec,vid = get_mode()
-if rec and not vid then
-	press("shoot_half")
-	local n = 0
-	repeat
-		sleep(10)
-		n = n + 10
-	until get_shooting() == true or n > timeout
-	release("shoot_half")
-else
-	press("shoot_half") 
-	sleep(1000)
-	release("shoot_half")
-end
-]],prefs.gui_shoot_half_timeout))
+				half_shoot()
 			end,
 		},
 		iup.fill{
@@ -443,6 +451,60 @@ end
 	iup.label{separator="HORIZONTAL"},
 	iup.hbox{
 		iup.button{
+			title='Macro',
+			size='45x15',
+			action=function(self)
+			con:execwait([[
+			press ("macro")
+			sleep (1500)
+			release ("macro")
+			]])
+			end,
+		},
+		iup.button{
+			title='Focus +',
+			size='45x15',
+			action=function(self)
+			mf = con:execwait('return is_key ("mf")')
+			printf("MF pressed %s\n",tostring(mf))	
+			if (tostring(mf) == 'false') then
+				--con:execwait('set_aflock(1)')
+				con:execwait('post_levent_for_npt("PressSw1AndMF")')
+				con:execwait('sleep (500)')
+				printf 'set manual focus\n'
+			end
+			focus=con:execwait('return get_focus()')
+			printf("Focus %s\n",tostring(focus))	
+			focus = focus + 10
+			--con:execwait('set_focus (25)')
+			con:execwait('set_focus (' .. focus .. ')')
+			focus=con:execwait('return get_focus()')
+			printf("Focus %s\n",tostring(focus))	
+			con:execwait('sleep (500)')
+			--con:execwait('release ("mf")')
+			--con:execwait('press ("shoot_half")')
+			end,
+		},
+		iup.button{
+			title='Focus -',
+			size='45x15',
+			action=function(self)
+			focus=con:execwait('return get_focus()')
+			printf("Focus %s\n",tostring(focus))	
+			focus = focus - 1
+			--con:execwait('set_mf(1)')
+			con:execwait('set_focus (' .. focus .. ')')
+			con:execwait('sleep (500)')
+			focus=con:execwait('return get_focus()')
+			printf("Focus %s\n",tostring(focus))	
+			--con:execwait('press ("shoot_half")')
+
+			end,
+		},
+		expand="HORIZONTAL",
+	},
+	iup.hbox{
+		iup.button{
 			title='rec',
 			size='45x15',
 			action=function(self)
@@ -476,7 +538,7 @@ end
 		iup.button{
 			title='reboot',
 			size='45x15',
-			action=function(self)
+			action=function(self) 
 				gui.execquick('reboot()')
 			end,
 		},
@@ -496,13 +558,13 @@ contab = iup.vbox{
 }
 
 maintabs = iup.tabs{
+	live.get_container(),
 	contab,
 	tree.get_container(),
-	live.get_container(),
     user.get_container(),
-	tabtitle0='Console',
-	tabtitle1=tree.get_container_title(),
-	tabtitle2=live.get_container_title(),
+	tabtitle0=live.get_container_title(),
+	tabtitle1='Console',
+	tabtitle2=tree.get_container_title(),
     tabtitle3=user.get_container_title(),
 }
 
